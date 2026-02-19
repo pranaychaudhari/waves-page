@@ -3,52 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hypnotic Interactive Waves</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
+    <title>Optimized Waves</title>
     <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-        }
-        canvas {
-            display: block;
-        }
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
     </style>
 </head>
-<body class="bg-black">
-    <div class="absolute top-4 left-4 text-white text-lg font-sans z-10">
-        Move your mouse to interact with the waves!
-    </div>
+<body>
+    <canvas id="waveCanvas"></canvas>
     <script>
-        function setup() {
-            createCanvas(windowWidth, windowHeight);
-        }
+        const canvas = document.getElementById('waveCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-        function windowResized() {
-            resizeCanvas(windowWidth, windowHeight);
-        }
+        // Optimization: Set pixel density for high-resolution displays
+        const pixelDensity = Math.min(window.devicePixelRatio, 2);
+        canvas.width *= pixelDensity;
+        canvas.height *= pixelDensity;
+        ctx.scale(pixelDensity, pixelDensity);
 
-        function draw() {
-            background(0);
-            let time = millis() * 0.001;
-            let mouseEffect = map(mouseX, 0, width, 0.5, 2.0);
-            let waveHeight = height * 0.1;
+        let waves = [];
+        let waveFrequency = 50;
+        let waveAmplitude = 20;
 
-            for (let y = 0; y < height; y += 10) {
-                beginShape();
-                for (let x = 0; x <= width; x += 10) {
-                    let waveOffset = sin(x * 0.01 + y * 0.02 + time) * waveHeight * mouseEffect;
-                    let r = map(sin(x * 0.01 + time), -1, 1, 100, 255);
-                    let g = map(sin(y * 0.02 + time), -1, 1, 100, 255);
-                    let b = map(cos(x * 0.01 + y * 0.02 + time), -1, 1, 100, 255);
-                    stroke(r, g, b);
-                    noFill();
-                    vertex(x, y + waveOffset);
-                }
-                endShape();
+        function createWaves() {
+            const now = new Date();
+            waves = [];
+            for (let i = 0; i < canvas.width; i += waveFrequency) {
+                waves.push({
+                    x: i,
+                    y: canvas.height / 2 + Math.sin(i / 100 + now.getTime() / 500) * waveAmplitude
+                });
             }
         }
+
+        function drawWaves() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#007BFF';
+            ctx.beginPath();
+            for (let wave of waves) {
+                ctx.lineTo(wave.x, wave.y);
+            }
+            ctx.lineTo(canvas.width, canvas.height);
+            ctx.lineTo(0, canvas.height);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function update() {
+            createWaves();
+            drawWaves();
+            // Using larger intervals for reducing lag
+            requestAnimationFrame(update);
+        }
+
+        window.addEventListener('resize', function() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            createWaves();
+        });
+
+        update();
     </script>
 </body>
 </html>
